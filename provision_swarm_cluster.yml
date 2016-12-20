@@ -117,16 +117,6 @@
       state: started
       enabled: yes
 
-  - name: Create directory for web app
-    file:
-      path: /data/var/www/
-      state: directory
-
-  - name: Copy and extract web app to swarm nodes
-    copy:
-      src: /srv/index.php
-      dest: /data/var/www/index.php
-
   - name: Reboot nodes for udpates to be applied
     shell: sleep 2 && shutdown -r now
     async: 1
