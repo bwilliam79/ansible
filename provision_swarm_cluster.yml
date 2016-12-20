@@ -11,6 +11,8 @@
       - swarm-worker-2
       - swarm-worker-3
 
+  tags: get_inventory
+
   gather_facts: false
 
   tasks:
@@ -252,6 +254,8 @@
         {{ groups['swarm_manager_ips'][0] }}:2377
 
 - hosts: swarm_managers, swarm_workers
+
+  tags: get_inventory
 
   gather_facts: false
 
