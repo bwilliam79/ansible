@@ -2,10 +2,5 @@
 localhost ansible_connection=local
 
 [swarm-managers]
-138.197.208.242
-138.197.210.189
 
 [swarm-workers]
-138.197.195.4
-138.68.53.32
-138.68.53.138
