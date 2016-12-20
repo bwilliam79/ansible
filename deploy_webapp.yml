@@ -1,5 +1,23 @@
 ---
-- hosts: swarm-manager-1
+- hosts: swarm-managers, swarm-workers
+
+  remote_user: root
+
+  tasks:
+
+  - name: Create directory for web app
+    file:
+      path: /data/var/www/
+      state: directory
+
+  - name: Copy and extract web app to swarm nodes
+    copy:
+      src: /srv/index.php
+      dest: /data/var/www/index.php
+
+- hosts: swarm-managers[0]
+
+  remote_user: root
 
   vars:
     replicas: 5
@@ -8,4 +26,4 @@
   tasks:
 
     - name: Deploy web service on swarm cluster
-      shell: docker service create --name web --replicas "{{ replicas }}" --publish 80:80 --env WEB_DOCUMENT_ROOT=/var/www --env WEB_DOCUMENT_INDEX=index.php --mount type=bind,source=/data/var/www,destination=/var/www webdevops/php-apache:"{{ debian-7 }}"
+      shell: docker service create --name web --replicas "{{ replicas }}" --publish 80:80 --env WEB_DOCUMENT_ROOT=/var/www --env WEB_DOCUMENT_INDEX=index.php --mount type=bind,source=/data/var/www,destination=/var/www webdevops/php-apache:"{{ version }}"
