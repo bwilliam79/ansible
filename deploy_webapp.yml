@@ -1,0 +1,11 @@
+---
+- hosts: swarm-manager-1
+
+  vars:
+    replicas: 5
+    version: debian-7
+
+  tasks:
+
+    - name: Deploy web service on swarm cluster
+      shell: docker service create --name web --replicas "{{ replicas }}" --publish 80:80 --env WEB_DOCUMENT_ROOT=/var/www --env WEB_DOCUMENT_INDEX=index.php --mount type=bind,source=/data/var/www,destination=/var/www webdevops/php-apache:"{{ debian-7 }}"
