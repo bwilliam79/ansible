@@ -78,13 +78,19 @@
 
   tasks:
 
-  - name: Wait 20 seconds for environment to stabilize
-    wait_for:
-      timeout: 20
+  - name: Confirm nodes are online 
+    become: false
+    wait_for: host={{ ansible_ssh_host }} state=started port=22 delay=30 timeout=300 connect_timeout=15
 
 - hosts: swarm_managers, swarm_workers
 
   tasks:
+
+  - name: upgrade all packages
+    yum:
+      name: '*'
+      state: latest
+    register: reboot
 
   - name: Add docker upstream repo
     yum_repository:
@@ -118,6 +124,18 @@
     copy:
       src: /srv/index.php
       dest: /data/var/www/index.php
+
+  - name: Reboot nodes for udpates to be applied
+    shell: sleep 2 && shutdown -r now
+    async: 1
+    poll: 0
+    ignore_errors: true
+    when: reboot.changed
+
+  - name: Wait for nodes to reboot
+    become: false
+    local_action: wait_for host={{ ansible_ssh_host }} state=started port=22 delay=30 timeout=300 connect_timeout=15
+    when: reboot.changed
 
 - hosts: swarm_managers
 
@@ -237,15 +255,8 @@
 
   tasks:
 
-    - name: Get swarm node list
-      shell: docker node ls
-
     - name: Deploy web service on swarm cluster
       shell: docker service create --name web --replicas 5 --publish 80:80 --env WEB_DOCUMENT_ROOT=/var/www --env WEB_DOCUMENT_INDEX=index.php --mount type=bind,source=/data/var/www,destination=/var/www webdevops/php-apache:debian-7
-      run_once: true
-
-    - name: Check service status
-      shell: docker service ps web
 
 - hosts: swarm_managers, swarm_workers
 
