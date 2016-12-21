@@ -185,7 +185,7 @@
     - name: Initialize swarm cluster
       shell: >
         docker swarm init
-        --advertise-addr={{ swarm_iface | default('eth1') }}:2377
+        --advertise-addr={{ swarm_iface | default('eth1') }}:2376
       when: "'swarm_manager_operational' not in groups"
       register: bootstrap_first_node
 
@@ -225,9 +225,9 @@
     - name: Join manager nodes to cluster
       shell: >
         docker swarm join
-        --advertise-addr={{ swarm_iface | default('eth1') }}:2377
+        --advertise-addr={{ swarm_iface | default('eth1') }}:2376
         --token={{ token }}
-        {{ groups['swarm_manager_ips'][0] }}:2377
+        {{ groups['swarm_manager_ips'][0] }}:2376
 
 - hosts: swarm_worker_bootstrap
 
@@ -239,9 +239,23 @@
     - name: Join worker nodes to cluster
       shell: >
         docker swarm join
-        --advertise-addr={{ swarm_iface | default('eth1') }}:2377
+        --advertise-addr={{ swarm_iface | default('eth1') }}:2376
         --token={{ token }}
-        {{ groups['swarm_manager_ips'][0] }}:2377
+        {{ groups['swarm_manager_ips'][0] }}:2376
+
+- hosts: swarm_managers[0]
+
+  tasks:
+
+  - name: Determine whether portainer service has been deployed
+    shell: docker service ps portainer | egrep 'portainer' | cut -d ' ' -f 9
+    register: portainer_status
+
+  - name: Deploy portainer.io service
+    shell: docker service create --name portainer --publish 9000:9000 --constraint 'node.role == manager' --mount type=bind,source=/var/run/docker.sock,dst=/var/run/docker.sock portainer/portainer --swarm
+    with_items: "{{ ansible_play_hosts | default(play_hosts) }}"
+    when: "'Running' not in hostvars[item].portainer_status.stdout_lines"
+    run_once: true
 
 - hosts: swarm_managers, swarm_workers
 
