@@ -1,5 +1,5 @@
   - name: Determine whether portainer service has been deployed
-    shell: docker service ps portainer | egrep 'portainer' | cut -d ' ' -f 9
+    shell: docker service ps portainer | egrep 'Running' | cut -d ' ' -f 13
     register: portainer_status
 
   - name: Deploy portainer.io service
