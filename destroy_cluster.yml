@@ -30,7 +30,6 @@
     with_items:
       - "{{ groups.swarm_managers }}"
       - "{{ groups.swarm_workers }}"
-    ignore_errors: yes
 
   - name: Remove swarm nodes from /etc/hosts
     become: true
@@ -64,6 +63,3 @@
 
   - name: Strip new lines from end of ansible inventory file
     shell: sed -e :a -i -e '/^\n*$/{$d;N;};/\n$/ba' /home/ansible/digitalocean/hosts
-
-  - name: Modify .bash_profile to remove docker master
-    lineinfile: dest=/home/ansible/.bash_profile regexp='^eval \$\(docker-machine env swarm-manager-1\)' state=absent
