@@ -1,0 +1,30 @@
+  - name: Add swarm nodes to /etc/hosts
+    become: true
+    lineinfile: dest=/etc/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{ hostvars[item].inventory_hostname }}" state=present
+    when: hostvars[item].ansible_default_ipv4.address is defined
+    with_items:
+      - "{{ groups.swarm_managers }}"
+      - "{{ groups.swarm_workers }}"
+
+  - name: Add swarm managers group to ansible inventory file
+    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*\n[swarm_managers]$' line="\n[swarm_managers]" state=present
+
+  - name: Add swarm managers to ansible inventory file
+    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].inventory_hostname }}" state=present
+    with_items:
+      - "{{ groups.swarm_managers }}"
+
+  - name: Add swarm workers group to ansible inventory file
+    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*\n[swarm_workers]$' line="\n[swarm_workers]" state=present
+
+  - name: Add swarm workers to ansible inventory file
+    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].inventory_hostname }}" state=present
+    with_items:
+      - "{{ groups.swarm_workers }}"
+
+  - name: Add swarm nodes to docker-machine on localhost
+    shell: docker-machine create --driver generic --generic-ip-address="{{ hostvars[item].ansible_default_ipv4.address }}" --generic-ssh-key=/home/ansible/.ssh/id_rsa --generic-ssh-user=root "{{ hostvars[item].inventory_hostname }}"
+    with_items:
+      - "{{ groups.swarm_managers }}"
+      - "{{ groups.swarm_workers }}"
+    ignore_errors: yes
