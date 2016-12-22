@@ -7,7 +7,7 @@
       - "{{ groups.swarm_workers }}"
 
   - name: Add swarm managers group to ansible inventory file
-    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*\n[swarm_managers]$' line="\n[swarm_managers]" state=present
+    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='^\[swarm_managers\]' line="\n[swarm_managers]" state=present
 
   - name: Add swarm managers to ansible inventory file
     lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].inventory_hostname }}" state=present
@@ -15,12 +15,15 @@
       - "{{ groups.swarm_managers }}"
 
   - name: Add swarm workers group to ansible inventory file
-    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*\n[swarm_workers]$' line="\n[swarm_workers]" state=present
+    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='^\[swarm_workers\]' line="\n[swarm_workers]" state=present
 
   - name: Add swarm workers to ansible inventory file
     lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].inventory_hostname }}" state=present
     with_items:
       - "{{ groups.swarm_workers }}"
+
+  - name: Strip double new lines from the inventory file
+    shell: sed -i '$!N; /^\(.*\)\n\1$/!P; D' /home/ansible/digitalocean/hosts
 
   - name: Add swarm nodes to docker-machine on localhost
     shell: docker-machine create --driver generic --generic-ip-address="{{ hostvars[item].ansible_default_ipv4.address }}" --generic-ssh-key=/home/ansible/.ssh/id_rsa --generic-ssh-user=root "{{ hostvars[item].inventory_hostname }}"
@@ -28,3 +31,9 @@
       - "{{ groups.swarm_managers }}"
       - "{{ groups.swarm_workers }}"
     ignore_errors: yes
+
+  - name: Set environment for docker master
+    shell: eval $(docker-machine env swarm-manager-1)
+
+  - name: Modify .bash_profile for docker master
+    lineinfile: dest=/home/ansible/.bash_profile regexp='^eval \$\(docker-machine env swarm-manager-1\)' line="eval $(docker-machine env swarm-manager-1)" state=present
