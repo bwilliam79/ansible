@@ -11,6 +11,7 @@
       - swarm-worker-1
       - swarm-worker-2
       - swarm-worker-3
+    ansible_inventory: /home/ansible/digitalocean/hosts
 
   tags: get_inventory
 
@@ -257,18 +258,18 @@
       - "{{ groups.swarm_workers }}"
 
   - name: Add swarm managers group to ansible inventory file
-    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*\n[swarm_managers]$' line="\n[swarm_managers]" state=present
+    lineinfile: dest="{{ ansible_inventory }}" regexp='.*\n[swarm_managers]$' line="\n[swarm_managers]" state=present
 
   - name: Add swarm managers to ansible inventory file
-    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].inventory_hostname }}" state=present
+    lineinfile: dest="{{ ansible_inventory }}" regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].inventory_hostname }}" state=present
     with_items:
       - "{{ groups.swarm_managers }}"
 
   - name: Add swarm workers group to ansible inventory file
-    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*\n[swarm_workers]$' line="\n[swarm_workers]" state=present
+    lineinfile: dest="{{ ansible_inventory }}" regexp='.*\n[swarm_workers]$' line="\n[swarm_workers]" state=present
 
   - name: Add swarm workers to ansible inventory file
-    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].inventory_hostname }}" state=present
+    lineinfile: dest="{{ ansible_inventory }}" regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].inventory_hostname }}" state=present
     with_items:
       - "{{ groups.swarm_workers }}"
 
