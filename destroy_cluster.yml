@@ -25,11 +25,16 @@
     digital_ocean:
       state: absent
       command: droplet
-      name: "{{ item }}"
+      name: "{{ hostvars[item].inventory_hostname }}"
+      unique_name: yes
+      size_id: 512mb
+      region_id: sfo2
+      image_id: centos-7-2-x64
       api_token: "{{ do_token }}"
     with_items:
       - "{{ groups.swarm_managers }}"
       - "{{ groups.swarm_workers }}"
+    ignore_errors: yes
 
   - name: Remove swarm nodes from /etc/hosts
     become: true
