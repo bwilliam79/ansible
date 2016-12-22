@@ -31,9 +31,3 @@
       - "{{ groups.swarm_managers }}"
       - "{{ groups.swarm_workers }}"
     ignore_errors: yes
-
-  - name: Set environment for docker master
-    shell: eval $(docker-machine env swarm-manager-1)
-
-  - name: Modify .bash_profile for docker master
-    lineinfile: dest=/home/ansible/.bash_profile regexp='^eval \$\(docker-machine env swarm-manager-1\)' line="eval $(docker-machine env swarm-manager-1)" state=present
