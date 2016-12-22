@@ -21,6 +21,17 @@
       - "{{ groups.swarm_workers }}"
     ignore_errors: yes
 
+  - name: Destroy docker nodes
+    digital_ocean:
+      state: absent
+      command: droplet
+      name: "{{ item }}"
+      api_token: "{{ do_token }}"
+    with_items:
+      - "{{ groups.swarm_managers }}"
+      - "{{ groups.swarm_workers }}"
+    ignore_errors: yes
+
   - name: Remove swarm nodes from /etc/hosts
     become: true
     lineinfile: dest=/etc/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' state=absent
@@ -56,14 +67,3 @@
 
   - name: Modify .bash_profile to remove docker master
     lineinfile: dest=/home/ansible/.bash_profile regexp='^eval \$\(docker-machine env swarm-manager-1\)' state=absent
-
-  - name: Destroy docker nodes
-    digital_ocean:
-      state: absent
-      command: droplet
-      name: "{{ item }}"
-      api_token: "{{ do_token }}"
-    with_items:
-      - "{{ groups.swarm_managers }}"
-      - "{{ groups.swarm_workers }}"
-    ignore_errors: yes
