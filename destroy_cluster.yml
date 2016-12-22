@@ -46,25 +46,30 @@
 
   - name: Strip new lines from end of /etc/hosts
     become: true
-    shell: sed -i -e :a -e '/^\n*$/{$d;N;};/\n$/ba' /etc/hosts
+    shell: sed -i -e :a -e '/^\n*$/{$d;N;};/\n$/ba' /etc/hosts warn=no
 
   - name: Remove swarm managers group from ansible inventory file
-    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*\[swarm_managers\]$' state=absent
+    become: true
+    lineinfile: dest=/etc/ansible/hosts regexp='.*\[swarm_managers\]$' state=absent
 
   - name: Remove swarm managers from ansible inventory file
-    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' state=absent
+    become: true
+    lineinfile: dest=/etc/ansible/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' state=absent
     with_items:
       - "{{ groups.swarm_managers }}"
     ignore_errors: yes
 
   - name: Remove swarm workers group from ansible inventory file
-    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*\[swarm_workers\]$' state=absent
+    become: true
+    lineinfile: dest=/etc/ansible/hosts regexp='.*\[swarm_workers\]$' state=absent
 
   - name: Remove swarm workers from ansible inventory file
-    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' state=absent
+    become: true
+    lineinfile: dest=/etc/ansible/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' state=absent
     with_items:
       - "{{ groups.swarm_workers }}"
     ignore_errors: yes
 
   - name: Strip new lines from end of ansible inventory file
-    shell: sed -e :a -i -e '/^\n*$/{$d;N;};/\n$/ba' /home/ansible/digitalocean/hosts
+    become: true
+    shell: sed -e :a -i -e '/^\n*$/{$d;N;};/\n$/ba' /etc/ansible/hosts warn=no
