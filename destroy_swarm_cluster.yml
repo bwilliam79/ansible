@@ -1,13 +1,7 @@
 ---
-- hosts: digitalocean
+- hosts: localhost
   vars:
     do_token: "{{ lookup('env','DO_API_KEY') }}"
-    droplets:
-      - swarm-manager-1
-      - swarm-manager-2
-      - swarm-worker-1
-      - swarm-worker-2
-      - swarm-worker-3
 
   tasks:
 
@@ -18,17 +12,53 @@
       name: ansible
       ssh_pub_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
       api_token: "{{ do_token }}"
-    register: ansible
+
+  - name: Remove swarm nodes from docker-machine on localhost
+    shell: docker-machine rm -y "{{ hostvars[item].inventory_hostname }}"
+    with_items:
+      - "{{ groups.swarm_managers }}"
+      - "{{ groups.swarm_workers }}"
+    ignore_errors: yes
+
+  - name: Remove swarm nodes from /etc/hosts
+    become: true
+    lineinfile: dest=/etc/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' state=absent
+    with_items:
+      - "{{ groups.swarm_managers }}"
+      - "{{ groups.swarm_workers }}"
+    ignore_errors: yes
+
+  - name: Strip new lines from end of /etc/hosts
+    become: true
+    shell: sed -e :a -i -e '/^\n*$/{$d;N;};/\n$/ba' /etc/hosts
+
+  - name: Remove swarm managers group from ansible inventory file
+    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*\[swarm_managers\]$' state=absent
+
+  - name: Remove swarm managers from ansible inventory file
+    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].inventory_hostname }}" state=absent
+    with_items:
+      - "{{ groups.swarm_managers }}"
+    ignore_errors: yes
+
+  - name: Remove swarm workers group from ansible inventory file
+    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*\[swarm_workers\]$' state=absent
+
+  - name: Remove swarm workers from ansible inventory file
+    lineinfile: dest=/home/ansible/digitalocean/hosts regexp='.*{{ hostvars[item].inventory_hostname }}$' line="{{ hostvars[item].inventory_hostname }}" state=absent
+    with_items:
+      - "{{ groups.swarm_workers }}"
+    ignore_errors: yes
+
+  - name: Strip new lines from end of ansible inventory file
+    shell: sed -e :a -i -e '/^\n*$/{$d;N;};/\n$/ba' /home/ansible/digitalocean/hosts
 
   - name: Destroy docker nodes
     digital_ocean:
       state: absent
       command: droplet
       name: "{{ item }}"
-      unique_name: yes
-      size_id: 512mb
-      region_id: sfo2
-      image_id: centos-7-2-x64
-      ssh_key_ids: "{{ ansible.ssh_key.id }}"
-      api_token: "{{ do_token }}"
-    with_items: "{{ droplets }}"
+    with_items:
+      - "{{ groups.swarm_managers }}"
+      - "{{ groups.swarm_workers }}"
+    ignore_errors: yes
